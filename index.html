@@ -565,23 +565,21 @@ function updateUI() {
 const boardImg  = new Image();
 const piecesImg = new Image();
 let imagesLoaded = 0;
+let pieceCanvas  = null;  // pieces.jpg with green BG removed
 
 const canvas = document.getElementById('board');
 const ctx    = canvas.getContext('2d');
 
-// Grid layout — calibrated for chessboard.jpg (1250 × 1600)
-// With boardX=44, boardY=53, cell=166 px:
-//   7 * 166 + 2 * 44 = 1250  ✓
-//   9 * 166 + 2 * 53 = 1600  ✓
-//   Centre of col 3 = 44 + 3.5*166 = 625 = image midpoint  ✓
-const IMG_W  = 1250;
-const IMG_H  = 1600;
-// Outer border of chessboard.jpg is a ~4px red frame right at the image edges.
-// Measured pixel positions: col borders at x≈4,182,534,713,1066,1244 → cell≈177px
-const BOARD_X = 4;                // px to left edge of cell-0 (outer border thickness)
-const BOARD_Y = 3;                // px to top edge of row-0  (outer border thickness)
-const CELL_W  = (IMG_W - 2 * BOARD_X) / COLS;   // ≈177.4 px
-const CELL_H  = (IMG_H - 2 * BOARD_Y) / ROWS;   // ≈177.1 px
+// Grid layout — calibrated for chessboard.png (912 × 1167)
+// Measured red grid-line centres:
+//   Vertical (y=583):  3, 133, 260, ~390, 520, 648, 777, 908  → cell ≈ 129.4 px
+//   Horizontal (x=456): 9, ~136, 264, 392, 519, 647, 775, 903, 1030, 1158 → cell ≈ 127.7 px
+const IMG_W  = 912;
+const IMG_H  = 1167;
+const BOARD_X = 3;                // outer border thickness (px)
+const BOARD_Y = 9;
+const CELL_W  = (IMG_W - 2 * BOARD_X) / COLS;   // ≈ 129.4 px
+const CELL_H  = (IMG_H - 2 * BOARD_Y) / ROWS;   // ≈ 127.7 px
 
 // Sprite grid — pieces.jpg (1200 × 1200) is 4 cols × 4 rows
 const SPR_W = 1200 / 4;   // = 300
@@ -594,21 +592,43 @@ function cellCenter(c, r) {
   };
 }
 
+// pieces.jpg background: RGB(169, 211, 139) — remove in-browser
+function processGreenBackground(img) {
+  const oc  = document.createElement('canvas');
+  oc.width  = img.naturalWidth;
+  oc.height = img.naturalHeight;
+  const oct = oc.getContext('2d');
+  oct.drawImage(img, 0, 0);
+  const id  = oct.getImageData(0, 0, oc.width, oc.height);
+  const d   = id.data;
+  const bgR = 169, bgG = 211, bgB = 139;
+  const HARD = 38, SOFT = 72;
+  for (let i = 0; i < d.length; i += 4) {
+    const dr = d[i] - bgR, dg = d[i+1] - bgG, db = d[i+2] - bgB;
+    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
+    if (dist < HARD)      d[i+3] = 0;
+    else if (dist < SOFT) d[i+3] = Math.round(d[i+3] * (dist - HARD) / (SOFT - HARD));
+  }
+  oct.putImageData(id, 0, 0);
+  return oc;
+}
+
 function onImageLoad() {
   if (++imagesLoaded < 2) return;
   canvas.width  = IMG_W;
   canvas.height = IMG_H;
+  pieceCanvas = processGreenBackground(piecesImg);
   initGame();
   render();
 }
 
 boardImg.onload  = onImageLoad;
 piecesImg.onload = onImageLoad;
-boardImg.onerror  = () => console.error('Failed to load chessboard.jpg');
+boardImg.onerror  = () => console.error('Failed to load chessboard.png');
 piecesImg.onerror = () => console.error('Failed to load pieces.jpg');
 
 boardImg.src  = 'chessboard.png';
-piecesImg.src = 'pieces.png';
+piecesImg.src = 'pieces.jpg';
 
 // ═══════════════════════════════════════════════
 //   RENDERING
@@ -669,10 +689,10 @@ function render() {
       const { x, y } = cellCenter(c, r);
       const [sc, sbr] = SPRITE_POS[piece.type];
       const sr        = sbr + (piece.player === 'black' ? 2 : 0);
-      const drawSize  = CELL_W * 0.90;
+      const drawSize  = CELL_W * 0.86;  // 86% — circle fits without clipping
 
       ctx.drawImage(
-        piecesImg,
+        pieceCanvas,
         sc * SPR_W, sr * SPR_H, SPR_W, SPR_H,          // source rect
         x - drawSize / 2, y - drawSize / 2, drawSize, drawSize  // dest rect
       );
