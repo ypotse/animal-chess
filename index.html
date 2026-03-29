@@ -353,24 +353,21 @@
 
     /* ── Language toggle ── */
     #lang-btn {
-      position: fixed;
-      bottom: 14px;
-      right: 16px;
-      font-size: 0.70rem;
-      padding: 3px 10px;
-      background: rgba(0,0,0,0.45);
-      border: 1px solid rgba(180,120,0,0.30);
-      border-radius: 10px;
-      color: rgba(200,160,80,0.60);
-      cursor: pointer;
-      letter-spacing: 1px;
-      z-index: 50;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-    }
-    #lang-btn:hover {
-      background: rgba(60,25,0,0.70);
-      border-color: rgba(180,120,0,0.70);
+      font-size: 0.78rem;
       color: #c8a060;
+      background: none;
+      border: 1px solid rgba(180,120,0,0.35);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    #lang-btn:hover { background: rgba(180,80,0,0.15); }
+
+    /* ── Bottom bar (rules + lang) ── */
+    #bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     /* ── Clock panel ── */
@@ -447,7 +444,10 @@
       </div>
     </div>
 
-    <button id="rules-open-btn">遊戲規則</button>
+    <div id="bottom-bar">
+      <button id="rules-open-btn">遊戲規則</button>
+      <button id="lang-btn">EN</button>
+    </div>
   </div>
 
   <div id="rules-overlay" class="hidden">
@@ -496,8 +496,6 @@
       <button id="restart-btn">重新開始</button>
     </div>
   </div>
-
-  <button id="lang-btn">EN</button>
 
 <script>
 'use strict';
