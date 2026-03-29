@@ -121,8 +121,8 @@
       line-height: 1.5;
     }
 
-    /* ── Rules toggle ── */
-    #rules-toggle {
+    /* ── Rules open button ── */
+    #rules-open-btn {
       font-size: 0.78rem;
       color: #c8a060;
       background: none;
@@ -132,22 +132,66 @@
       cursor: pointer;
       align-self: center;
     }
-    #rules-toggle:hover { background: rgba(180,80,0,0.15); }
+    #rules-open-btn:hover { background: rgba(180,80,0,0.15); }
 
-    #rules-box {
-      background: rgba(0,0,0,0.50);
-      border: 1px solid rgba(180,100,0,0.3);
-      border-radius: 8px;
-      padding: 12px 14px;
-      font-size: 0.78rem;
-      line-height: 1.7;
-      color: #d4bc80;
-      display: none;
+    /* ── Rules overlay ── */
+    #rules-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
     }
-    #rules-box.open { display: block; }
-    #rules-box h4 { color: #ffcc66; margin-bottom: 6px; font-size: 0.82rem; }
-    #rules-box ul { padding-left: 18px; }
-    #rules-box li { margin-bottom: 2px; }
+    #rules-overlay.hidden { display: none; }
+    .rules-content {
+      background: #2e1200;
+      border: 1px solid rgba(180,100,0,0.5);
+      border-radius: 12px;
+      padding: 24px 28px;
+      max-width: 460px;
+      width: 100%;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      color: #d4bc80;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .rules-content h3 {
+      color: #ffcc66;
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 4px;
+    }
+    .rules-content h4 { color: #ffcc66; margin: 10px 0 4px; font-size: 0.88rem; }
+    .rules-content ul { padding-left: 18px; }
+    .rules-content li { margin-bottom: 3px; }
+    #rules-back-btn { margin-top: 20px; padding: 8px 28px; font-size: 0.95rem; }
+
+    /* ── Undo button ── */
+    #undo-btn {
+      font-size: 0.80rem;
+      padding: 5px 11px;
+    }
+    /* Colours reflect whose move will be undone */
+    #undo-btn.undo-red {
+      background: #5c1212;
+      border-color: #c03030;
+      color: #ffaaaa;
+    }
+    #undo-btn.undo-red:hover:not(:disabled) { background: #7a1c1c; }
+    #undo-btn.undo-black {
+      background: #262626;
+      border-color: #888888;
+      color: #cccccc;
+    }
+    #undo-btn.undo-black:hover:not(:disabled) { background: #383838; }
+    #undo-btn:disabled { opacity: 0.32; cursor: default; }
+    #undo-btn:disabled:hover { background: inherit; }
 
     /* ── Win overlay ── */
     #win-overlay {
@@ -181,16 +225,211 @@
       color: #c8a060;
       margin-bottom: 24px;
     }
+
+    /* ── Setup overlay ── */
+    #setup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+    #setup-overlay.hidden { display: none; }
+
+    #setup-box {
+      background: #2e1200;
+      border: 2px solid #cc6010;
+      border-radius: 16px;
+      padding: 32px 40px;
+      min-width: 280px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(200,100,0,0.4);
+    }
+    #setup-box h2 {
+      font-size: 1.3rem;
+      color: #ffcc66;
+      letter-spacing: 4px;
+      margin-bottom: 22px;
+    }
+    .setup-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 18px;
+      gap: 6px;
+    }
+    .setup-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #f0d8a0;
+      user-select: none;
+    }
+    .setup-label input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+      accent-color: #cc6010;
+    }
+    .setup-hint {
+      font-size: 0.72rem;
+      color: #987840;
+      padding-left: 23px;
+    }
+    .clock-setting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 23px;
+    }
+    .clock-setting span { font-size: 0.82rem; color: #c8a060; }
+    #s-clock-mins, #s-clock-inc {
+      background: #3e1800;
+      color: #f0d8a0;
+      border: 1px solid #9a5010;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    #s-clock-mins:disabled, #s-clock-inc:disabled { opacity: 0.38; cursor: default; }
+    #start-game-btn {
+      margin-top: 8px;
+      padding: 10px 32px;
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+    #start-game-btn:disabled { opacity: 0.45; cursor: default; }
+
+    /* ── Resign button ── */
+    #resign-btn {
+      font-size: 0.80rem;
+      padding: 5px 11px;
+      background: #1e1e1e;
+      border-color: #555;
+      color: #aaa;
+    }
+    #resign-btn:hover:not(:disabled) { background: #2e2e2e; border-color: #888; color: #ddd; }
+    #resign-btn:disabled { opacity: 0.28; cursor: default; }
+
+    /* ── Resign confirm overlay ── */
+    #resign-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 250;
+    }
+    #resign-overlay.hidden { display: none; }
+    #resign-box {
+      background: #1c1000;
+      border: 2px solid #555;
+      border-radius: 14px;
+      padding: 28px 40px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(0,0,0,0.7);
+    }
+    #resign-box p {
+      font-size: 1.05rem;
+      color: #f0d8a0;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .resign-actions { display: flex; gap: 14px; justify-content: center; }
+    #resign-confirm-btn {
+      background: #5c1212;
+      border-color: #c03030;
+      color: #ffaaaa;
+      padding: 7px 22px;
+    }
+    #resign-confirm-btn:hover { background: #7a1c1c; }
+
+    /* ── Language toggle ── */
+    #lang-btn {
+      position: fixed;
+      bottom: 14px;
+      right: 16px;
+      font-size: 0.70rem;
+      padding: 3px 10px;
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(180,120,0,0.30);
+      border-radius: 10px;
+      color: rgba(200,160,80,0.60);
+      cursor: pointer;
+      letter-spacing: 1px;
+      z-index: 50;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    #lang-btn:hover {
+      background: rgba(60,25,0,0.70);
+      border-color: rgba(180,120,0,0.70);
+      color: #c8a060;
+    }
+
+    /* ── Clock panel ── */
+    #clock-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    #clock-panel.hidden { display: none; }
+    .clock-box {
+      background: rgba(0,0,0,0.40);
+      border: 1px solid rgba(140,80,0,0.30);
+      border-radius: 8px;
+      padding: 7px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .clock-box.active {
+      background: rgba(80,40,0,0.55);
+      border-color: rgba(200,120,0,0.65);
+    }
+    .clock-player { font-size: 0.70rem; letter-spacing: 2px; opacity: 0.70; }
+    .clock-box.clock-red   .clock-player { color: #ff7070; }
+    .clock-box.clock-black .clock-player { color: #aaaaaa; }
+    .clock-time {
+      font-size: 1.35rem;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
+    }
+    .clock-box.clock-red   .clock-time { color: #ff9090; }
+    .clock-box.clock-black .clock-time { color: #c0c0c0; }
+    .clock-time.urgent { color: #ff2020 !important; animation: urgentBlink 0.7s step-end infinite; }
+    @keyframes urgentBlink { 50% { opacity: 0.25; } }
   </style>
 </head>
 <body>
-  <h1>鬥獸棋</h1>
+  <h1 id="page-title">鬥獸棋</h1>
 
   <div id="app">
     <div id="info-bar">
       <span id="turn-indicator" class="red">紅方回合</span>
       <span id="status-msg"></span>
+      <button id="undo-btn" disabled>悔棋</button>
+      <button id="resign-btn" disabled>投降</button>
       <button id="new-game-btn">新對局</button>
+    </div>
+
+    <div id="clock-panel" class="hidden">
+      <div class="clock-box clock-black" id="clock-box-black">
+        <span class="clock-player" id="clock-black-label">黑方</span>
+        <span class="clock-time" id="clock-black-time">10:00</span>
+      </div>
+      <div class="clock-box clock-red" id="clock-box-red">
+        <span class="clock-player" id="clock-red-label">紅方</span>
+        <span class="clock-time" id="clock-red-time">10:00</span>
+      </div>
     </div>
 
     <div id="canvas-wrap">
@@ -199,29 +438,54 @@
 
     <div id="captured-panel">
       <div class="cap-box">
-        <h4 style="color:#ff8080">紅方吃子</h4>
+        <h4 id="cap-red-label" style="color:#ff8080">紅方吃子</h4>
         <div id="red-cap" class="cap-list">—</div>
       </div>
       <div class="cap-box">
-        <h4 style="color:#a0a0a0">黑方吃子</h4>
+        <h4 id="cap-black-label" style="color:#a0a0a0">黑方吃子</h4>
         <div id="black-cap" class="cap-list">—</div>
       </div>
     </div>
 
-    <button id="rules-toggle">▶ 遊戲規則</button>
-    <div id="rules-box">
-      <h4>棋子等級（大→小）</h4>
-      <p>象(8) &gt; 獅(7) &gt; 虎(6) &gt; 豹(5) &gt; 狼(4) &gt; 狗(3) &gt; 貓(2) &gt; 鼠(1)</p>
-      <h4 style="margin-top:8px">特殊規則</h4>
-      <ul>
-        <li>鼠 可吃 象；象 不可吃 鼠</li>
-        <li>鼠 可游入河中；在水中的鼠 不可吃 陸上的象</li>
-        <li>獅、虎 可跳越整條河（直跳或橫跳）；河中有鼠則不能越河</li>
-        <li>棋子進入對方陷阱（陷阱）後，任何棋子均可將其吃掉</li>
-        <li>率先進入對方獸穴，或吃光對方所有棋子，即勝</li>
-        <li>不可進入己方獸穴</li>
-        <li>紅方先行</li>
-      </ul>
+    <button id="rules-open-btn">遊戲規則</button>
+  </div>
+
+  <div id="rules-overlay" class="hidden">
+    <div class="rules-content"><!-- filled by applyLang() --></div>
+  </div>
+
+  <div id="resign-overlay" class="hidden">
+    <div id="resign-box">
+      <p id="resign-prompt">確認投降？</p>
+      <div class="resign-actions">
+        <button id="resign-confirm-btn">確認投降</button>
+        <button id="resign-cancel-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="setup-overlay">
+    <div id="setup-box">
+      <h2 id="setup-title">遊戲設定</h2>
+      <div class="setup-row">
+        <label class="setup-label">
+          <input type="checkbox" id="s-undo" checked> <span id="s-undo-label">啟用悔棋</span>
+        </label>
+        <span id="s-undo-hint" class="setup-hint">每方每回合限悔一次</span>
+      </div>
+      <div class="setup-row">
+        <label class="setup-label">
+          <input type="checkbox" id="s-clock"> <span id="s-clock-label">啟用棋鐘</span>
+        </label>
+        <div class="clock-setting">
+          <select id="s-clock-mins" disabled></select>
+          <span id="s-min-per-label">分 / 方</span>
+          <span id="s-inc-plus-label" style="margin-left:4px">＋</span>
+          <select id="s-clock-inc" disabled></select>
+          <span id="s-sec-per-label">秒 / 步</span>
+        </div>
+      </div>
+      <button id="start-game-btn" disabled>載入中…</button>
     </div>
   </div>
 
@@ -232,6 +496,8 @@
       <button id="restart-btn">重新開始</button>
     </div>
   </div>
+
+  <button id="lang-btn">EN</button>
 
 <script>
 'use strict';
@@ -266,15 +532,170 @@ const TERRAIN = [
 //   PIECE DEFINITIONS
 // ═══════════════════════════════════════════════
 const PIECE_DEF = {
-  elephant: { rank: 8, name: '象' },
-  lion:     { rank: 7, name: '獅' },
-  tiger:    { rank: 6, name: '虎' },
-  leopard:  { rank: 5, name: '豹' },
-  wolf:     { rank: 4, name: '狼' },
-  dog:      { rank: 3, name: '狗' },
-  cat:      { rank: 2, name: '貓' },
-  rat:      { rank: 1, name: '鼠' },
+  elephant: { rank: 8, name: '象', nameEn: 'Elephant' },
+  lion:     { rank: 7, name: '獅', nameEn: 'Lion'     },
+  tiger:    { rank: 6, name: '虎', nameEn: 'Tiger'    },
+  leopard:  { rank: 5, name: '豹', nameEn: 'Leopard'  },
+  wolf:     { rank: 4, name: '狼', nameEn: 'Wolf'     },
+  dog:      { rank: 3, name: '狗', nameEn: 'Dog'      },
+  cat:      { rank: 2, name: '貓', nameEn: 'Cat'      },
+  rat:      { rank: 1, name: '鼠', nameEn: 'Rat'      },
 };
+
+// ═══════════════════════════════════════════════
+//   LANGUAGE / I18N
+// ═══════════════════════════════════════════════
+let lang = 'zh'; // 'zh' | 'en'
+
+const LANG = {
+  zh: {
+    title:          '鬥獸棋',
+    turn_red:       '紅方回合',
+    turn_black:     '黑方回合',
+    undo_label:     '悔棋',
+    undo_red:       '紅方悔棋',
+    undo_black:     '黑方悔棋',
+    undo_tip:       (s) => `撤銷${s === 'red' ? '紅方' : '黑方'}剛才的一步`,
+    undo_tip_used:  '每輪僅限悔棋一次',
+    resign_btn:     '投降',
+    new_game:       '新對局',
+    clock_red:      '紅方',
+    clock_black:    '黑方',
+    cap_red:        '紅方吃子',
+    cap_black:      '黑方吃子',
+    rules_btn:      '遊戲規則',
+    resign_confirm: '確認投降',
+    resign_cancel:  '取消',
+    resign_prompt:  (s) => `${s === 'red' ? '紅方' : '黑方'}確認投降？`,
+    setup_title:    '遊戲設定',
+    setup_undo:     '啟用悔棋',
+    setup_undo_hint:'每方每回合限悔一次',
+    setup_clock:    '啟用棋鐘',
+    setup_min_per:  '分 / 方',
+    setup_inc_plus: '＋',
+    setup_sec_per:  '秒 / 步',
+    setup_loading:  '載入中…',
+    setup_start:    '開始遊戲',
+    restart:        '重新開始',
+    win:            (s) => s === 'red' ? '紅方勝！' : '黑方勝！',
+    win_class_red:  '紅方勝！',
+    reason_den:     '闖入對方獸穴',
+    reason_captures:'殲滅對方所有棋子',
+    reason_timeout: (s) => `${s === 'red' ? '紅方' : '黑方'}超時`,
+    reason_resign:  (s) => `${s === 'red' ? '紅方' : '黑方'}投降`,
+    no_moves:       (n) => `${n} 無路可走`,
+    lang_toggle:    'EN',
+    rules_html: `<h3>遊戲規則</h3>
+      <h4>棋子等級（大→小）</h4>
+      <p>象(8) &gt; 獅(7) &gt; 虎(6) &gt; 豹(5) &gt; 狼(4) &gt; 狗(3) &gt; 貓(2) &gt; 鼠(1)</p>
+      <h4 style="margin-top:8px">特殊規則</h4>
+      <ul>
+        <li>鼠 可吃 象；象 不可吃 鼠</li>
+        <li>鼠 可游入河中；在水中的鼠 不可吃 陸上的象</li>
+        <li>獅、虎 可跳越整條河（直跳或橫跳）；河中有鼠則不能越河</li>
+        <li>棋子進入對方陷阱後，任何棋子均可將其吃掉</li>
+        <li>率先進入對方獸穴，或吃光對方所有棋子，即勝</li>
+        <li>不可進入己方獸穴</li>
+        <li>紅方先行</li>
+      </ul>
+      <div style="text-align:center">
+        <button id="rules-back-btn">回到遊戲</button>
+      </div>`,
+  },
+  en: {
+    title:          'Jungle Chess',
+    turn_red:       "Red's Turn",
+    turn_black:     "Black's Turn",
+    undo_label:     'Take Back',
+    undo_red:       'Red Take Back',
+    undo_black:     'Black Take Back',
+    undo_tip:       (s) => `Undo ${s === 'red' ? 'Red' : 'Black'}'s last move`,
+    undo_tip_used:  'One take-back per round',
+    resign_btn:     'Resign',
+    new_game:       'New Game',
+    clock_red:      'Red',
+    clock_black:    'Black',
+    cap_red:        'Red Captures',
+    cap_black:      'Black Captures',
+    rules_btn:      'Rules',
+    resign_confirm: 'Confirm Resign',
+    resign_cancel:  'Cancel',
+    resign_prompt:  (s) => `${s === 'red' ? 'Red' : 'Black'} resigns?`,
+    setup_title:    'Game Settings',
+    setup_undo:     'Allow Take-back',
+    setup_undo_hint:'One take-back per round per side',
+    setup_clock:    'Chess Clock',
+    setup_min_per:  'min / side',
+    setup_inc_plus: '+',
+    setup_sec_per:  'sec / move',
+    setup_loading:  'Loading\u2026',
+    setup_start:    'Start Game',
+    restart:        'Play Again',
+    win:            (s) => s === 'red' ? 'Red Wins!' : 'Black Wins!',
+    reason_den:     "Entered opponent's den",
+    reason_captures:'All enemy pieces captured',
+    reason_timeout: (s) => `${s === 'red' ? 'Red' : 'Black'} timeout`,
+    reason_resign:  (s) => `${s === 'red' ? 'Red' : 'Black'} resigned`,
+    no_moves:       (n) => `${n} has no moves`,
+    lang_toggle:    '中文',
+    rules_html: `<h3>Game Rules</h3>
+      <h4>Piece Ranks (Strong \u2192 Weak)</h4>
+      <p>Elephant(8) &gt; Lion(7) &gt; Tiger(6) &gt; Leopard(5) &gt; Wolf(4) &gt; Dog(3) &gt; Cat(2) &gt; Rat(1)</p>
+      <h4 style="margin-top:8px">Special Rules</h4>
+      <ul>
+        <li>Rat can capture Elephant; Elephant cannot capture Rat</li>
+        <li>Rat can swim in rivers; a Rat in water cannot capture a land Elephant</li>
+        <li>Lion &amp; Tiger may leap over entire rivers; blocked if a Rat is in the river</li>
+        <li>Any piece in an enemy trap loses its rank and can be captured by any piece</li>
+        <li>Win by entering the opponent's den, or by capturing all enemy pieces</li>
+        <li>Cannot enter your own den</li>
+        <li>Red moves first</li>
+      </ul>
+      <div style="text-align:center">
+        <button id="rules-back-btn">Back to Game</button>
+      </div>`,
+  },
+};
+
+function T(key, arg) {
+  const val = LANG[lang][key];
+  return typeof val === 'function' ? val(arg) : (val ?? key);
+}
+
+function pieceName(type) {
+  return lang === 'zh' ? PIECE_DEF[type].name : PIECE_DEF[type].nameEn;
+}
+
+function applyLang() {
+  document.title = T('title');
+  document.documentElement.lang = lang;
+  document.getElementById('lang-btn').textContent           = T('lang_toggle');
+  document.getElementById('page-title').textContent         = T('title');
+  document.getElementById('resign-btn').textContent         = T('resign_btn');
+  document.getElementById('new-game-btn').textContent       = T('new_game');
+  document.getElementById('clock-black-label').textContent  = T('clock_black');
+  document.getElementById('clock-red-label').textContent    = T('clock_red');
+  document.getElementById('cap-red-label').textContent      = T('cap_red');
+  document.getElementById('cap-black-label').textContent    = T('cap_black');
+  document.getElementById('rules-open-btn').textContent     = T('rules_btn');
+  document.getElementById('resign-confirm-btn').textContent = T('resign_confirm');
+  document.getElementById('resign-cancel-btn').textContent  = T('resign_cancel');
+  document.getElementById('setup-title').textContent        = T('setup_title');
+  document.getElementById('s-undo-label').textContent       = T('setup_undo');
+  document.getElementById('s-undo-hint').textContent        = T('setup_undo_hint');
+  document.getElementById('s-clock-label').textContent      = T('setup_clock');
+  document.getElementById('s-min-per-label').textContent    = T('setup_min_per');
+  document.getElementById('s-inc-plus-label').textContent   = T('setup_inc_plus');
+  document.getElementById('s-sec-per-label').textContent    = T('setup_sec_per');
+  document.getElementById('restart-btn').textContent        = T('restart');
+  const startBtn = document.getElementById('start-game-btn');
+  startBtn.textContent = imagesReady ? T('setup_start') : T('setup_loading');
+  // Rules content (rebuilds innerHTML so the back button is always in current language)
+  document.querySelector('#rules-overlay .rules-content').innerHTML = T('rules_html');
+  // Refresh dynamic elements
+  updateUI();
+  updateUndoBtn();
+}
 
 // Sprite position in pieces.png — no longer needed (individual assets used)
 // kept as reference only
@@ -308,6 +729,12 @@ const INIT_POS = [
 ];
 
 // ═══════════════════════════════════════════════
+//   SETTINGS (locked once a game starts)
+// ═══════════════════════════════════════════════
+const settings = { undoEnabled: true, clockEnabled: false, clockMinutes: 10, clockIncrement: 0 };
+let imagesReady = false;
+
+// ═══════════════════════════════════════════════
 //   GAME STATE
 // ═══════════════════════════════════════════════
 let board = [];           // board[row][col] = {player, type} | null
@@ -319,9 +746,124 @@ let capturedByRed   = []; // types of pieces Red captured
 let capturedByBlack = []; // types of pieces Black captured
 let lastMove      = null; // {from:{col,row}, to:{col,row}} for visual hint
 
+// Undo state
+let lastSnapshot      = null;  // game state before the most recent move
+let undoUsedThisRound = false; // undo was used; resets only after opponent's next move
+let postUndoMove      = false; // marks the recovery move after an undo
+
+// Clock state
+let clockRed      = 0;   // remaining seconds for red
+let clockBlack    = 0;   // remaining seconds for black
+let clockInterval = null;
+
 // Animation state (for pulsing capture highlights)
 let animFrame = null;
 let animPhase = 0;
+
+// ═══════════════════════════════════════════════
+//   UNDO HELPERS
+// ═══════════════════════════════════════════════
+function saveSnapshot() {
+  return {
+    board:          board.map(row => row.map(cell => cell ? { ...cell } : null)),
+    currentPlayer,
+    capturedByRed:   [...capturedByRed],
+    capturedByBlack: [...capturedByBlack],
+    lastMove:        lastMove ? { from: { ...lastMove.from }, to: { ...lastMove.to } } : null,
+    clockRed,
+    clockBlack,
+  };
+}
+
+function restoreSnapshot(snap) {
+  board           = snap.board;
+  currentPlayer   = snap.currentPlayer;
+  capturedByRed   = snap.capturedByRed;
+  capturedByBlack = snap.capturedByBlack;
+  lastMove        = snap.lastMove;
+  if (settings.clockEnabled) {
+    clockRed   = snap.clockRed;
+    clockBlack = snap.clockBlack;
+  }
+}
+
+function updateUndoBtn() {
+  const btn = document.getElementById('undo-btn');
+  if (!btn) return;
+  btn.style.display = settings.undoEnabled ? '' : 'none';
+  if (!settings.undoEnabled) return;
+  const available = !gameOver && !!lastSnapshot && !undoUsedThisRound;
+  btn.disabled = !available;
+  const undoTarget = currentPlayer === 'red' ? 'black' : 'red';
+  btn.className   = available ? `undo-${undoTarget}` : '';
+  btn.title       = available ? T('undo_tip', undoTarget) : T('undo_tip_used');
+  btn.textContent = available ? T(`undo_${undoTarget}`) : T('undo_label');
+}
+
+// ═══════════════════════════════════════════════
+//   CLOCK HELPERS
+// ═══════════════════════════════════════════════
+function formatTime(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function renderClock() {
+  const panel = document.getElementById('clock-panel');
+  if (!settings.clockEnabled) { panel.classList.add('hidden'); return; }
+  panel.classList.remove('hidden');
+
+  const redBox    = document.getElementById('clock-box-red');
+  const blackBox  = document.getElementById('clock-box-black');
+  const redTime   = document.getElementById('clock-red-time');
+  const blackTime = document.getElementById('clock-black-time');
+
+  redTime.textContent   = formatTime(clockRed);
+  blackTime.textContent = formatTime(clockBlack);
+
+  redBox.classList.toggle('active',   !gameOver && currentPlayer === 'red');
+  blackBox.classList.toggle('active', !gameOver && currentPlayer === 'black');
+
+  redTime.classList.toggle('urgent',   clockRed   <= 30);
+  blackTime.classList.toggle('urgent', clockBlack <= 30);
+}
+
+function stopClock() {
+  if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+}
+
+function startClock() {
+  if (!settings.clockEnabled || gameOver) return;
+  stopClock();
+  clockInterval = setInterval(() => {
+    if (currentPlayer === 'red') {
+      clockRed--;
+      if (clockRed <= 0) {
+        clockRed = 0;
+        renderClock();
+        stopClock();
+        endGame('black', T('reason_timeout', 'red'));
+        return;
+      }
+    } else {
+      clockBlack--;
+      if (clockBlack <= 0) {
+        clockBlack = 0;
+        renderClock();
+        stopClock();
+        endGame('red', T('reason_timeout', 'black'));
+        return;
+      }
+    }
+    renderClock();
+  }, 1000);
+}
+
+function resetClocks() {
+  clockRed   = settings.clockMinutes * 60;
+  clockBlack = settings.clockMinutes * 60;
+}
 
 function initGame() {
   board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
@@ -332,12 +874,21 @@ function initGame() {
   capturedByRed   = [];
   capturedByBlack = [];
   lastMove        = null;
+  lastSnapshot      = null;
+  undoUsedThisRound = false;
+  postUndoMove      = false;
+  stopClock();
+  resetClocks();
   stopAnim();
   for (const [c, r, player, type] of INIT_POS) {
     board[r][c] = { player, type };
   }
   document.getElementById('win-overlay').classList.add('hidden');
   updateUI();
+  updateUndoBtn();
+  updateResignBtn();
+  renderClock();
+  if (settings.clockEnabled) startClock();
 }
 
 // ═══════════════════════════════════════════════
@@ -492,7 +1043,7 @@ function executeMove(fromCol, fromRow, toCol, toRow) {
   const den = denOwner(toCol, toRow);
   if (den && den !== piece.player) {
     finishMove();
-    endGame(piece.player, '闖入對方獸穴');
+    endGame(piece.player, T('reason_den'));
     return;
   }
 
@@ -506,11 +1057,23 @@ function executeMove(fromCol, fromRow, toCol, toRow) {
   }
   if (!oppAlive) {
     finishMove();
-    endGame(piece.player, '殲滅對方所有棋子');
+    endGame(piece.player, T('reason_captures'));
     return;
   }
 
   currentPlayer = opp;
+  // Apply Fischer increment to the player who just completed their move
+  if (settings.clockEnabled && settings.clockIncrement > 0) {
+    if (piece.player === 'red') clockRed   += settings.clockIncrement;
+    else                        clockBlack += settings.clockIncrement;
+  }
+  // Undo-round bookkeeping: if this was the recovery move after an undo,
+  // don't reset undoUsedThisRound yet — wait for the opponent's move.
+  if (postUndoMove) {
+    postUndoMove = false;
+  } else {
+    undoUsedThisRound = false;
+  }
   finishMove();
 }
 
@@ -518,7 +1081,10 @@ function finishMove() {
   selectedCell = null;
   validMoves   = [];
   stopAnim();
+  if (settings.clockEnabled && !gameOver) { stopClock(); startClock(); }
   updateUI();
+  updateUndoBtn();
+  renderClock();
   render();
 }
 
@@ -529,12 +1095,16 @@ function endGame(winner, reason) {
   gameOver = true;
   selectedCell = null;
   validMoves   = [];
+  stopClock();
+  updateUndoBtn();
+  updateResignBtn();
+  renderClock();
   render();
 
   const overlay = document.getElementById('win-overlay');
   const msg     = document.getElementById('win-message');
   const rsn     = document.getElementById('win-reason');
-  msg.textContent = winner === 'red' ? '紅方勝！' : '黑方勝！';
+  msg.textContent = T('win', winner);
   msg.className   = winner;
   rsn.textContent = reason;
   overlay.classList.remove('hidden');
@@ -546,16 +1116,16 @@ function endGame(winner, reason) {
 function updateUI() {
   const ti = document.getElementById('turn-indicator');
   if (currentPlayer === 'red') {
-    ti.textContent = '紅方回合';
+    ti.textContent = T('turn_red');
     ti.className   = 'red';
   } else {
-    ti.textContent = '黑方回合';
+    ti.textContent = T('turn_black');
     ti.className   = 'black';
   }
   document.getElementById('status-msg').textContent = '';
 
   const fmt = list => list.length
-    ? list.map(t => PIECE_DEF[t].name).join(' ')
+    ? list.map(t => pieceName(t)).join(' ')
     : '—';
   document.getElementById('red-cap').textContent   = fmt(capturedByRed);
   document.getElementById('black-cap').textContent = fmt(capturedByBlack);
@@ -595,8 +1165,13 @@ function onImageLoad() {
   if (++imagesLoaded < TOTAL_IMAGES) return;
   canvas.width  = IMG_W;
   canvas.height = IMG_H;
-  initGame();
-  render();
+  // Draw a blank board while the setup overlay is shown
+  ctx.drawImage(boardImg, 0, 0);
+  // Unlock the start button
+  imagesReady = true;
+  const btn = document.getElementById('start-game-btn');
+  btn.disabled    = false;
+  btn.textContent = T('setup_start');
 }
 
 boardImg.onload  = onImageLoad;
@@ -733,6 +1308,7 @@ function handleCellClick(col, row) {
   // Is this a valid move/capture destination?
   const isValidDest = validMoves.some(m => m.col === col && m.row === row);
   if (isValidDest && selectedCell) {
+    lastSnapshot = saveSnapshot();
     executeMove(selectedCell.col, selectedCell.row, col, row);
     return;
   }
@@ -744,7 +1320,7 @@ function handleCellClick(col, row) {
     validMoves   = getValidMoves(col, row);
     const status  = document.getElementById('status-msg');
     status.textContent = validMoves.length === 0
-      ? `${PIECE_DEF[piece.type].name} 無路可走`
+      ? T('no_moves', pieceName(piece.type))
       : '';
     // Animate if any valid move is a capture
     const hasCapture = validMoves.some(m => board[m.row][m.col] !== null);
@@ -765,26 +1341,128 @@ function deselect() {
 }
 
 // ═══════════════════════════════════════════════
-//   BUTTONS
+//   SETUP OVERLAY
 // ═══════════════════════════════════════════════
-document.getElementById('new-game-btn').addEventListener('click', () => {
+
+// Populate the clock-minutes select (1–15, default 10)
+(function populateClockSelects() {
+  const sel = document.getElementById('s-clock-mins');
+  for (let i = 1; i <= 15; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = i;
+    if (i === 10) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  // Populate increment select: 0, 2, 3, 5, 10, 15, 20, 30 seconds (Fischer clock)
+  const inc = document.getElementById('s-clock-inc');
+  for (const s of [0, 2, 3, 5, 10, 15, 20, 30]) {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    inc.appendChild(opt);
+  }
+})();
+
+document.getElementById('s-clock').addEventListener('change', function () {
+  document.getElementById('s-clock-mins').disabled = !this.checked;
+  document.getElementById('s-clock-inc').disabled  = !this.checked;
+});
+
+function openSetupOverlay() {
+  // Pre-fill with last used settings
+  document.getElementById('s-undo').checked  = settings.undoEnabled;
+  document.getElementById('s-clock').checked = settings.clockEnabled;
+  document.getElementById('s-clock-mins').disabled = !settings.clockEnabled;
+  document.getElementById('s-clock-mins').value    = settings.clockMinutes;
+  document.getElementById('s-clock-inc').disabled  = !settings.clockEnabled;
+  document.getElementById('s-clock-inc').value     = settings.clockIncrement;
+  document.getElementById('setup-overlay').classList.remove('hidden');
+}
+
+document.getElementById('start-game-btn').addEventListener('click', () => {
+  if (!imagesReady) return;
+  settings.undoEnabled    = document.getElementById('s-undo').checked;
+  settings.clockEnabled   = document.getElementById('s-clock').checked;
+  settings.clockMinutes   = parseInt(document.getElementById('s-clock-mins').value, 10);
+  settings.clockIncrement = parseInt(document.getElementById('s-clock-inc').value,  10);
+  document.getElementById('setup-overlay').classList.add('hidden');
   gameOver = false;
   initGame();
   render();
+});
+
+// ═══════════════════════════════════════════════
+//   BUTTONS
+// ═══════════════════════════════════════════════
+function updateResignBtn() {
+  const btn = document.getElementById('resign-btn');
+  if (btn) btn.disabled = gameOver;
+}
+
+document.getElementById('new-game-btn').addEventListener('click', () => {
+  stopClock();
+  document.getElementById('resign-overlay').classList.add('hidden');
+  openSetupOverlay();
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
-  gameOver = false;
-  initGame();
+  stopClock();
+  document.getElementById('resign-overlay').classList.add('hidden');
+  openSetupOverlay();
+});
+
+document.getElementById('resign-btn').addEventListener('click', () => {
+  if (gameOver) return;
+  stopClock();
+  document.getElementById('resign-prompt').textContent = T('resign_prompt', currentPlayer);
+  document.getElementById('resign-overlay').classList.remove('hidden');
+});
+
+document.getElementById('resign-confirm-btn').addEventListener('click', () => {
+  document.getElementById('resign-overlay').classList.add('hidden');
+  const loser  = currentPlayer;
+  const winner = loser === 'red' ? 'black' : 'red';
+  endGame(winner, T('reason_resign', loser));
+});
+
+document.getElementById('resign-cancel-btn').addEventListener('click', () => {
+  document.getElementById('resign-overlay').classList.add('hidden');
+  if (settings.clockEnabled && !gameOver) startClock();
+});
+
+document.getElementById('undo-btn').addEventListener('click', () => {
+  if (gameOver || !lastSnapshot || undoUsedThisRound) return;
+  stopClock();
+  restoreSnapshot(lastSnapshot);
+  lastSnapshot      = null;
+  undoUsedThisRound = true;
+  postUndoMove      = true;
+  selectedCell = null;
+  validMoves   = [];
+  stopAnim();
+  updateUI();
+  updateUndoBtn();
+  renderClock();
+  if (settings.clockEnabled) startClock();
   render();
 });
 
-document.getElementById('rules-toggle').addEventListener('click', () => {
-  const box = document.getElementById('rules-box');
-  const btn = document.getElementById('rules-toggle');
-  box.classList.toggle('open');
-  btn.textContent = box.classList.contains('open') ? '▼ 遊戲規則' : '▶ 遊戲規則';
+document.getElementById('rules-open-btn').addEventListener('click', () => {
+  document.getElementById('rules-overlay').classList.remove('hidden');
 });
+
+document.getElementById('rules-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'rules-back-btn')
+    document.getElementById('rules-overlay').classList.add('hidden');
+});
+
+document.getElementById('lang-btn').addEventListener('click', () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  applyLang();
+});
+
+applyLang();
 </script>
 </body>
 </html>
