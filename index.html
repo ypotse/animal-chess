@@ -565,7 +565,6 @@ function updateUI() {
 const boardImg  = new Image();
 const piecesImg = new Image();
 let imagesLoaded = 0;
-let pieceCanvas  = null;  // pieces.jpg with green BG removed
 
 const canvas = document.getElementById('board');
 const ctx    = canvas.getContext('2d');
@@ -581,9 +580,9 @@ const BOARD_Y = 9;
 const CELL_W  = (IMG_W - 2 * BOARD_X) / COLS;   // ≈ 129.4 px
 const CELL_H  = (IMG_H - 2 * BOARD_Y) / ROWS;   // ≈ 127.7 px
 
-// Sprite grid — pieces.jpg (1200 × 1200) is 4 cols × 4 rows
-const SPR_W = 1200 / 4;   // = 300
-const SPR_H = 1200 / 4;   // = 300
+// Sprite grid — pieces.png (1024 × 1024) is 4 cols × 4 rows
+const SPR_W = 1024 / 4;   // = 256
+const SPR_H = 1024 / 4;   // = 256
 
 function cellCenter(c, r) {
   return {
@@ -592,32 +591,10 @@ function cellCenter(c, r) {
   };
 }
 
-// pieces.jpg background: RGB(169, 211, 139) — remove in-browser
-function processGreenBackground(img) {
-  const oc  = document.createElement('canvas');
-  oc.width  = img.naturalWidth;
-  oc.height = img.naturalHeight;
-  const oct = oc.getContext('2d');
-  oct.drawImage(img, 0, 0);
-  const id  = oct.getImageData(0, 0, oc.width, oc.height);
-  const d   = id.data;
-  const bgR = 169, bgG = 211, bgB = 139;
-  const HARD = 38, SOFT = 72;
-  for (let i = 0; i < d.length; i += 4) {
-    const dr = d[i] - bgR, dg = d[i+1] - bgG, db = d[i+2] - bgB;
-    const dist = Math.sqrt(dr*dr + dg*dg + db*db);
-    if (dist < HARD)      d[i+3] = 0;
-    else if (dist < SOFT) d[i+3] = Math.round(d[i+3] * (dist - HARD) / (SOFT - HARD));
-  }
-  oct.putImageData(id, 0, 0);
-  return oc;
-}
-
 function onImageLoad() {
   if (++imagesLoaded < 2) return;
   canvas.width  = IMG_W;
   canvas.height = IMG_H;
-  pieceCanvas = processGreenBackground(piecesImg);
   initGame();
   render();
 }
@@ -625,10 +602,10 @@ function onImageLoad() {
 boardImg.onload  = onImageLoad;
 piecesImg.onload = onImageLoad;
 boardImg.onerror  = () => console.error('Failed to load chessboard.png');
-piecesImg.onerror = () => console.error('Failed to load pieces.jpg');
+piecesImg.onerror = () => console.error('Failed to load pieces.png');
 
 boardImg.src  = 'chessboard.png';
-piecesImg.src = 'pieces.jpg';
+piecesImg.src = 'pieces.png';
 
 // ═══════════════════════════════════════════════
 //   RENDERING
@@ -692,7 +669,7 @@ function render() {
       const drawSize  = CELL_W * 0.86;  // 86% — circle fits without clipping
 
       ctx.drawImage(
-        pieceCanvas,
+        piecesImg,
         sc * SPR_W, sr * SPR_H, SPR_W, SPR_H,          // source rect
         x - drawSize / 2, y - drawSize / 2, drawSize, drawSize  // dest rect
       );
