@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鬥獸棋</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1e0e00;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Noto Serif TC', '宋體', 'SimSun', serif;
+      color: #f0d8a0;
+      padding-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      letter-spacing: 6px;
+      padding: 14px 0 4px;
+      color: #ffcc66;
+      text-shadow: 0 0 12px rgba(255,160,0,0.5);
+    }
+
+    #app {
+      width: 100%;
+      max-width: 560px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    /* ── Info bar ── */
+    #info-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.50);
+      border: 1px solid rgba(180,100,0,0.35);
+      border-radius: 8px;
+      padding: 8px 14px;
+      min-height: 46px;
+      gap: 8px;
+    }
+
+    #turn-indicator {
+      font-size: 1.05rem;
+      font-weight: bold;
+      min-width: 72px;
+    }
+    #turn-indicator.red   { color: #ff6060; }
+    #turn-indicator.black { color: #aaaaaa; }
+
+    #status-msg {
+      flex: 1;
+      font-size: 0.82rem;
+      color: #c8a060;
+      text-align: center;
+    }
+
+    button {
+      background: #5a2000;
+      color: #f0d8a0;
+      border: 1px solid #9a5010;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    button:hover { background: #7a3010; }
+    button:active { background: #4a1800; }
+
+    /* ── Canvas ── */
+    #canvas-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+      border-radius: 3px;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.85);
+    }
+
+    /* ── Captured pieces panel ── */
+    #captured-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .cap-box {
+      background: rgba(0,0,0,0.38);
+      border: 1px solid rgba(140,80,0,0.3);
+      border-radius: 6px;
+      padding: 7px 10px;
+      min-height: 42px;
+    }
+    .cap-box h4 {
+      font-size: 0.75rem;
+      margin-bottom: 3px;
+      opacity: 0.75;
+    }
+    .cap-list {
+      font-size: 0.9rem;
+      letter-spacing: 3px;
+      color: #d4a040;
+      min-height: 22px;
+      line-height: 1.5;
+    }
+
+    /* ── Rules toggle ── */
+    #rules-toggle {
+      font-size: 0.78rem;
+      color: #c8a060;
+      background: none;
+      border: 1px solid rgba(180,120,0,0.35);
+      border-radius: 5px;
+      padding: 4px 10px;
+      cursor: pointer;
+      align-self: center;
+    }
+    #rules-toggle:hover { background: rgba(180,80,0,0.15); }
+
+    #rules-box {
+      background: rgba(0,0,0,0.50);
+      border: 1px solid rgba(180,100,0,0.3);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: #d4bc80;
+      display: none;
+    }
+    #rules-box.open { display: block; }
+    #rules-box h4 { color: #ffcc66; margin-bottom: 6px; font-size: 0.82rem; }
+    #rules-box ul { padding-left: 18px; }
+    #rules-box li { margin-bottom: 2px; }
+
+    /* ── Win overlay ── */
+    #win-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.80);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    #win-overlay.hidden { display: none; }
+
+    #win-box {
+      background: #2e1200;
+      border: 2px solid #cc6010;
+      border-radius: 16px;
+      padding: 36px 52px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(200,100,0,0.4);
+    }
+    #win-message {
+      font-size: 1.9rem;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    #win-message.red   { color: #ff7070; }
+    #win-message.black { color: #c0c0c0; }
+    #win-reason {
+      font-size: 0.9rem;
+      color: #c8a060;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>鬥獸棋</h1>
+
+  <div id="app">
+    <div id="info-bar">
+      <span id="turn-indicator" class="red">紅方回合</span>
+      <span id="status-msg"></span>
+      <button id="new-game-btn">新對局</button>
+    </div>
+
+    <div id="canvas-wrap">
+      <canvas id="board"></canvas>
+    </div>
+
+    <div id="captured-panel">
+      <div class="cap-box">
+        <h4 style="color:#ff8080">紅方吃子</h4>
+        <div id="red-cap" class="cap-list">—</div>
+      </div>
+      <div class="cap-box">
+        <h4 style="color:#a0a0a0">黑方吃子</h4>
+        <div id="black-cap" class="cap-list">—</div>
+      </div>
+    </div>
+
+    <button id="rules-toggle">▶ 遊戲規則</button>
+    <div id="rules-box">
+      <h4>棋子等級（大→小）</h4>
+      <p>象(8) &gt; 獅(7) &gt; 虎(6) &gt; 豹(5) &gt; 狼(4) &gt; 狗(3) &gt; 貓(2) &gt; 鼠(1)</p>
+      <h4 style="margin-top:8px">特殊規則</h4>
+      <ul>
+        <li>鼠 可吃 象；象 不可吃 鼠</li>
+        <li>鼠 可游入河中；在水中的鼠 不可吃 陸上的象</li>
+        <li>獅、虎 可跳越整條河（直跳或橫跳）；河中有鼠則不能越河</li>
+        <li>棋子進入對方陷阱（陷阱）後，任何棋子均可將其吃掉</li>
+        <li>率先進入對方獸穴，或吃光對方所有棋子，即勝</li>
+        <li>不可進入己方獸穴</li>
+        <li>紅方先行</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="win-overlay" class="hidden">
+    <div id="win-box">
+      <div id="win-message"></div>
+      <div id="win-reason"></div>
+      <button id="restart-btn">重新開始</button>
+    </div>
+  </div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+//   BOARD CONSTANTS
+// ═══════════════════════════════════════════════
+const COLS = 7, ROWS = 9;
+
+// Terrain codes
+const LAND    = 0;
+const WATER   = 1;
+const TRAP_T  = 2;  // Trap in Black's home territory  (Red pieces here have rank 0)
+const TRAP_B  = 3;  // Trap in Red's home territory   (Black pieces here have rank 0)
+const DEN_T   = 4;  // Black's den (col 3, row 0)
+const DEN_B   = 5;  // Red's den   (col 3, row 8)
+
+// terrain[row][col]
+const TERRAIN = [
+  [LAND,  LAND,  TRAP_T, DEN_T,  TRAP_T, LAND,  LAND ],  // row 0
+  [LAND,  LAND,  LAND,   TRAP_T, LAND,   LAND,  LAND ],  // row 1
+  [LAND,  LAND,  LAND,   LAND,   LAND,   LAND,  LAND ],  // row 2
+  [LAND,  WATER, WATER,  LAND,   WATER,  WATER, LAND ],  // row 3
+  [LAND,  WATER, WATER,  LAND,   WATER,  WATER, LAND ],  // row 4
+  [LAND,  WATER, WATER,  LAND,   WATER,  WATER, LAND ],  // row 5
+  [LAND,  LAND,  LAND,   LAND,   LAND,   LAND,  LAND ],  // row 6
+  [LAND,  LAND,  LAND,   TRAP_B, LAND,   LAND,  LAND ],  // row 7
+  [LAND,  LAND,  TRAP_B, DEN_B,  TRAP_B, LAND,  LAND ],  // row 8
+];
+
+// ═══════════════════════════════════════════════
+//   PIECE DEFINITIONS
+// ═══════════════════════════════════════════════
+const PIECE_DEF = {
+  elephant: { rank: 8, name: '象' },
+  lion:     { rank: 7, name: '獅' },
+  tiger:    { rank: 6, name: '虎' },
+  leopard:  { rank: 5, name: '豹' },
+  wolf:     { rank: 4, name: '狼' },
+  dog:      { rank: 3, name: '狗' },
+  cat:      { rank: 2, name: '貓' },
+  rat:      { rank: 1, name: '鼠' },
+};
+
+// Sprite position in pieces.jpg (4×4 grid)
+// [spriteCol, spriteBaseRow]  — black adds +2 to row
+const SPRITE_POS = {
+  elephant: [0, 0],
+  tiger:    [1, 0],
+  cat:      [2, 0],
+  wolf:     [3, 0],
+  dog:      [0, 1],
+  rat:      [1, 1],
+  leopard:  [2, 1],
+  lion:     [3, 1],
+};
+
+// Initial positions  [col, row, player, type]
+const INIT_POS = [
+  // Black (top side — pieces face downward on the board image)
+  [0, 0, 'black', 'lion'],
+  [6, 0, 'black', 'tiger'],
+  [1, 1, 'black', 'dog'],
+  [5, 1, 'black', 'cat'],
+  [0, 2, 'black', 'rat'],
+  [2, 2, 'black', 'leopard'],
+  [4, 2, 'black', 'wolf'],
+  [6, 2, 'black', 'elephant'],
+  // Red (bottom side — moves first)
+  [0, 6, 'red', 'elephant'],
+  [2, 6, 'red', 'wolf'],
+  [4, 6, 'red', 'leopard'],
+  [6, 6, 'red', 'rat'],
+  [1, 7, 'red', 'cat'],
+  [5, 7, 'red', 'dog'],
+  [0, 8, 'red', 'tiger'],
+  [6, 8, 'red', 'lion'],
+];
+
+// ═══════════════════════════════════════════════
+//   GAME STATE
+// ═══════════════════════════════════════════════
+let board = [];           // board[row][col] = {player, type} | null
+let currentPlayer = 'red';
+let selectedCell  = null; // {col, row} | null
+let validMoves    = [];   // [{col, row}, ...]
+let gameOver      = false;
+let capturedByRed   = []; // types of pieces Red captured
+let capturedByBlack = []; // types of pieces Black captured
+let lastMove      = null; // {from:{col,row}, to:{col,row}} for visual hint
+
+function initGame() {
+  board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  currentPlayer = 'red';
+  selectedCell  = null;
+  validMoves    = [];
+  gameOver      = false;
+  capturedByRed   = [];
+  capturedByBlack = [];
+  lastMove        = null;
+  for (const [c, r, player, type] of INIT_POS) {
+    board[r][c] = { player, type };
+  }
+  document.getElementById('win-overlay').classList.add('hidden');
+  updateUI();
+}
+
+// ═══════════════════════════════════════════════
+//   TERRAIN HELPERS
+// ═══════════════════════════════════════════════
+function inBounds(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+function isWater(c, r)  { return TERRAIN[r][c] === WATER; }
+
+// Which player owns this den (null if not a den)
+function denOwner(c, r) {
+  const t = TERRAIN[r][c];
+  if (t === DEN_T) return 'black';
+  if (t === DEN_B) return 'red';
+  return null;
+}
+
+// Effective rank for capture purposes (trap reduces opponent to 0)
+function effectiveRank(piece, c, r) {
+  const t = TERRAIN[r][c];
+  if (t === TRAP_T && piece.player === 'red')   return 0;
+  if (t === TRAP_B && piece.player === 'black')  return 0;
+  return PIECE_DEF[piece.type].rank;
+}
+
+// ═══════════════════════════════════════════════
+//   LION / TIGER RIVER JUMP
+// ═══════════════════════════════════════════════
+// Returns landing {col,row} or null if jump is blocked / impossible.
+function getJumpDest(col, row, dc, dr) {
+  // Immediate neighbour must be water to initiate a jump
+  const fc = col + dc, fr = row + dr;
+  if (!inBounds(fc, fr) || !isWater(fc, fr)) return null;
+
+  let c = fc, r = fr;
+  while (inBounds(c, r) && isWater(c, r)) {
+    if (board[r][c] !== null) return null; // Any piece in water blocks the jump
+    c += dc;
+    r += dr;
+  }
+  if (!inBounds(c, r)) return null;
+  return { col: c, row: r };
+}
+
+// ═══════════════════════════════════════════════
+//   CAPTURE LEGALITY
+// ═══════════════════════════════════════════════
+function canCapture(attacker, ac, ar, defender, dc, dr) {
+  const atkInWater = isWater(ac, ar);
+  const defInWater = isWater(dc, dr);
+
+  // A piece on land cannot reach a piece that is in water
+  // (this is enforced by movement rules, but guard here for safety)
+  if (defInWater && !atkInWater) return false;
+
+  const defRank = effectiveRank(defender, dc, dr);
+  // Trap reduces defender to rank 0 → any attacker can capture it
+  if (defRank === 0) return true;
+
+  // ── Rat ↔ Elephant special cases ──
+  if (attacker.type === 'rat' && defender.type === 'elephant') {
+    // Rat in water cannot capture Elephant on land
+    if (atkInWater && !defInWater) return false;
+    return true; // Rat beats Elephant (land-to-land or both-land)
+  }
+  if (attacker.type === 'elephant' && defender.type === 'rat') {
+    return false; // Elephant never captures Rat
+  }
+
+  return effectiveRank(attacker, ac, ar) >= defRank;
+}
+
+// ═══════════════════════════════════════════════
+//   VALID MOVE GENERATION
+// ═══════════════════════════════════════════════
+const DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+
+function getValidMoves(col, row) {
+  const piece = board[row][col];
+  if (!piece) return [];
+  const moves = [];
+
+  for (const [dc, dr] of DIRS) {
+    const nc = col + dc, nr = row + dr;
+    if (!inBounds(nc, nr)) continue;
+
+    const terrain = TERRAIN[nr][nc];
+
+    if (terrain === WATER) {
+      // ── Moving INTO a water cell ──
+      if (piece.type === 'rat') {
+        // Rat can enter and swim in water
+        const target = board[nr][nc];
+        if (!target) {
+          moves.push({ col: nc, row: nr });
+        } else if (target.player !== piece.player) {
+          // In water, Rat may only fight another Rat
+          if (target.type === 'rat') {
+            moves.push({ col: nc, row: nr });
+          }
+        }
+      } else if (piece.type === 'lion' || piece.type === 'tiger') {
+        // Lion / Tiger can jump over the entire river
+        const dest = getJumpDest(col, row, dc, dr);
+        if (dest) {
+          const target = board[dest.row][dest.col];
+          if (!target) {
+            moves.push(dest);
+          } else if (target.player !== piece.player &&
+                     canCapture(piece, col, row, target, dest.col, dest.row)) {
+            moves.push(dest);
+          }
+        }
+      }
+      // Other land pieces cannot enter water → no move added
+
+    } else {
+      // ── Moving INTO a land / trap / den cell ──
+
+      // A piece cannot enter its OWN den
+      const own = denOwner(nc, nr);
+      if (own === piece.player) continue;
+
+      const target = board[nr][nc];
+      if (!target) {
+        moves.push({ col: nc, row: nr });
+      } else if (target.player !== piece.player &&
+                 canCapture(piece, col, row, target, nc, nr)) {
+        moves.push({ col: nc, row: nr });
+      }
+    }
+  }
+  return moves;
+}
+
+// ═══════════════════════════════════════════════
+//   EXECUTE MOVE
+// ═══════════════════════════════════════════════
+function executeMove(fromCol, fromRow, toCol, toRow) {
+  const piece  = board[fromRow][fromCol];
+  const target = board[toRow][toCol];
+
+  if (target) {
+    if (piece.player === 'red')   capturedByRed.push(target.type);
+    else                          capturedByBlack.push(target.type);
+  }
+
+  board[toRow][toCol]     = piece;
+  board[fromRow][fromCol] = null;
+  lastMove = { from: { col: fromCol, row: fromRow }, to: { col: toCol, row: toRow } };
+
+  // ── Win: entered opponent's den ──
+  const den = denOwner(toCol, toRow);
+  if (den && den !== piece.player) {
+    finishMove();
+    endGame(piece.player, '闖入對方獸穴');
+    return;
+  }
+
+  // ── Win: opponent has no pieces left ──
+  const opp = piece.player === 'red' ? 'black' : 'red';
+  let oppAlive = false;
+  outer: for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (board[r][c] && board[r][c].player === opp) { oppAlive = true; break outer; }
+    }
+  }
+  if (!oppAlive) {
+    finishMove();
+    endGame(piece.player, '殲滅對方所有棋子');
+    return;
+  }
+
+  currentPlayer = opp;
+  finishMove();
+}
+
+function finishMove() {
+  selectedCell = null;
+  validMoves   = [];
+  updateUI();
+  render();
+}
+
+// ═══════════════════════════════════════════════
+//   END GAME
+// ═══════════════════════════════════════════════
+function endGame(winner, reason) {
+  gameOver = true;
+  selectedCell = null;
+  validMoves   = [];
+  render();
+
+  const overlay = document.getElementById('win-overlay');
+  const msg     = document.getElementById('win-message');
+  const rsn     = document.getElementById('win-reason');
+  msg.textContent = winner === 'red' ? '紅方勝！' : '黑方勝！';
+  msg.className   = winner;
+  rsn.textContent = reason;
+  overlay.classList.remove('hidden');
+}
+
+// ═══════════════════════════════════════════════
+//   UI UPDATE
+// ═══════════════════════════════════════════════
+function updateUI() {
+  const ti = document.getElementById('turn-indicator');
+  if (currentPlayer === 'red') {
+    ti.textContent = '紅方回合';
+    ti.className   = 'red';
+  } else {
+    ti.textContent = '黑方回合';
+    ti.className   = 'black';
+  }
+  document.getElementById('status-msg').textContent = '';
+
+  const fmt = list => list.length
+    ? list.map(t => PIECE_DEF[t].name).join(' ')
+    : '—';
+  document.getElementById('red-cap').textContent   = fmt(capturedByRed);
+  document.getElementById('black-cap').textContent = fmt(capturedByBlack);
+}
+
+// ═══════════════════════════════════════════════
+//   IMAGES & CANVAS SETUP
+// ═══════════════════════════════════════════════
+const boardImg  = new Image();
+const piecesImg = new Image();
+let imagesLoaded = 0;
+
+const canvas = document.getElementById('board');
+const ctx    = canvas.getContext('2d');
+
+// Grid layout — calibrated for chessboard.jpg (1250 × 1600)
+// With boardX=44, boardY=53, cell=166 px:
+//   7 * 166 + 2 * 44 = 1250  ✓
+//   9 * 166 + 2 * 53 = 1600  ✓
+//   Centre of col 3 = 44 + 3.5*166 = 625 = image midpoint  ✓
+const IMG_W  = 1250;
+const IMG_H  = 1600;
+// Outer border of chessboard.jpg is a ~4px red frame right at the image edges.
+// Measured pixel positions: col borders at x≈4,182,534,713,1066,1244 → cell≈177px
+const BOARD_X = 4;                // px to left edge of cell-0 (outer border thickness)
+const BOARD_Y = 3;                // px to top edge of row-0  (outer border thickness)
+const CELL_W  = (IMG_W - 2 * BOARD_X) / COLS;   // ≈177.4 px
+const CELL_H  = (IMG_H - 2 * BOARD_Y) / ROWS;   // ≈177.1 px
+
+// Sprite grid — pieces.jpg (1200 × 1200) is 4 cols × 4 rows
+const SPR_W = 1200 / 4;   // = 300
+const SPR_H = 1200 / 4;   // = 300
+
+function cellCenter(c, r) {
+  return {
+    x: BOARD_X + (c + 0.5) * CELL_W,
+    y: BOARD_Y + (r + 0.5) * CELL_H,
+  };
+}
+
+function onImageLoad() {
+  if (++imagesLoaded < 2) return;
+  canvas.width  = IMG_W;
+  canvas.height = IMG_H;
+  initGame();
+  render();
+}
+
+boardImg.onload  = onImageLoad;
+piecesImg.onload = onImageLoad;
+boardImg.onerror  = () => console.error('Failed to load chessboard.jpg');
+piecesImg.onerror = () => console.error('Failed to load pieces.jpg');
+
+boardImg.src  = 'chessboard.png';
+piecesImg.src = 'pieces.png';
+
+// ═══════════════════════════════════════════════
+//   RENDERING
+// ═══════════════════════════════════════════════
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 1. Board background
+  ctx.drawImage(boardImg, 0, 0);
+
+  // 2. Last-move indicator (subtle tint)
+  if (lastMove) {
+    for (const cell of [lastMove.from, lastMove.to]) {
+      const { x, y } = cellCenter(cell.col, cell.row);
+      ctx.beginPath();
+      ctx.arc(x, y, CELL_W * 0.44, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 200, 0, 0.18)';
+      ctx.fill();
+    }
+  }
+
+  // 3. Valid-move highlights
+  for (const { col, row } of validMoves) {
+    const { x, y } = cellCenter(col, row);
+    const target   = board[row][col];
+    ctx.beginPath();
+    ctx.arc(x, y, CELL_W * 0.43, 0, Math.PI * 2);
+    ctx.fillStyle = target
+      ? 'rgba(255, 70, 0, 0.40)'   // capture target
+      : 'rgba(60, 220, 80, 0.35)'; // empty destination
+    ctx.fill();
+
+    // Small dot for empty destinations
+    if (!target) {
+      ctx.beginPath();
+      ctx.arc(x, y, CELL_W * 0.14, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(60, 230, 80, 0.75)';
+      ctx.fill();
+    }
+  }
+
+  // 4. Selected-piece ring
+  if (selectedCell) {
+    const { x, y } = cellCenter(selectedCell.col, selectedCell.row);
+    ctx.beginPath();
+    ctx.arc(x, y, CELL_W * 0.47, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 230, 0, 0.92)';
+    ctx.lineWidth   = 6;
+    ctx.stroke();
+  }
+
+  // 5. Draw all pieces
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const piece = board[r][c];
+      if (!piece) continue;
+
+      const { x, y } = cellCenter(c, r);
+      const [sc, sbr] = SPRITE_POS[piece.type];
+      const sr        = sbr + (piece.player === 'black' ? 2 : 0);
+      const drawSize  = CELL_W * 0.90;
+
+      ctx.drawImage(
+        piecesImg,
+        sc * SPR_W, sr * SPR_H, SPR_W, SPR_H,          // source rect
+        x - drawSize / 2, y - drawSize / 2, drawSize, drawSize  // dest rect
+      );
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+//   CLICK HANDLING
+// ═══════════════════════════════════════════════
+canvas.addEventListener('click', (e) => {
+  if (gameOver) return;
+
+  const rect   = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;   // map CSS pixels → canvas pixels
+  const scaleY = canvas.height / rect.height;
+  const x      = (e.clientX - rect.left) * scaleX;
+  const y      = (e.clientY - rect.top)  * scaleY;
+
+  const col = Math.floor((x - BOARD_X) / CELL_W);
+  const row = Math.floor((y - BOARD_Y) / CELL_H);
+
+  if (!inBounds(col, row)) { deselect(); return; }
+  handleCellClick(col, row);
+});
+
+function handleCellClick(col, row) {
+  // Is this a valid move/capture destination?
+  const isValidDest = validMoves.some(m => m.col === col && m.row === row);
+  if (isValidDest && selectedCell) {
+    executeMove(selectedCell.col, selectedCell.row, col, row);
+    return;
+  }
+
+  // Click on own piece → select / reselect
+  const piece = board[row][col];
+  if (piece && piece.player === currentPlayer) {
+    selectedCell = { col, row };
+    validMoves   = getValidMoves(col, row);
+    const status  = document.getElementById('status-msg');
+    status.textContent = validMoves.length === 0
+      ? `${PIECE_DEF[piece.type].name} 無路可走`
+      : '';
+    render();
+    return;
+  }
+
+  // Anything else → deselect
+  deselect();
+}
+
+function deselect() {
+  selectedCell = null;
+  validMoves   = [];
+  document.getElementById('status-msg').textContent = '';
+  render();
+}
+
+// ═══════════════════════════════════════════════
+//   BUTTONS
+// ═══════════════════════════════════════════════
+document.getElementById('new-game-btn').addEventListener('click', () => {
+  gameOver = false;
+  initGame();
+  render();
+});
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+  gameOver = false;
+  initGame();
+  render();
+});
+
+document.getElementById('rules-toggle').addEventListener('click', () => {
+  const box = document.getElementById('rules-box');
+  const btn = document.getElementById('rules-toggle');
+  box.classList.toggle('open');
+  btn.textContent = box.classList.contains('open') ? '▼ 遊戲規則' : '▶ 遊戲規則';
+});
+</script>
+</body>
+</html>
