@@ -276,18 +276,14 @@ const PIECE_DEF = {
   rat:      { rank: 1, name: '鼠' },
 };
 
-// Sprite position in pieces.jpg (4×4 grid)
-// [spriteCol, spriteBaseRow]  — black adds +2 to row
+// Sprite position in pieces.png — no longer needed (individual assets used)
+// kept as reference only
+/*
 const SPRITE_POS = {
-  elephant: [0, 0],
-  tiger:    [1, 0],
-  cat:      [2, 0],
-  wolf:     [3, 0],
-  dog:      [0, 1],
-  rat:      [1, 1],
-  leopard:  [2, 1],
-  lion:     [3, 1],
+  elephant: [0, 0], tiger: [1, 0], cat: [2, 0], wolf: [3, 0],
+  dog: [0, 1], rat: [1, 1], leopard: [2, 1], lion: [3, 1],
 };
+*/
 
 // Initial positions  [col, row, player, type]
 const INIT_POS = [
@@ -568,27 +564,16 @@ function updateUI() {
 // ═══════════════════════════════════════════════
 //   IMAGES & CANVAS SETUP
 // ═══════════════════════════════════════════════
-const boardImg  = new Image();
-const piecesImg = new Image();
-let imagesLoaded = 0;
-
 const canvas = document.getElementById('board');
 const ctx    = canvas.getContext('2d');
 
 // Grid layout — calibrated for chessboard.png (912 × 1167)
-// Measured red grid-line centres:
-//   Vertical (y=583):  3, 133, 260, ~390, 520, 648, 777, 908  → cell ≈ 129.4 px
-//   Horizontal (x=456): 9, ~136, 264, 392, 519, 647, 775, 903, 1030, 1158 → cell ≈ 127.7 px
 const IMG_W  = 912;
 const IMG_H  = 1167;
-const BOARD_X = 3;                // outer border thickness (px)
+const BOARD_X = 3;
 const BOARD_Y = 9;
 const CELL_W  = (IMG_W - 2 * BOARD_X) / COLS;   // ≈ 129.4 px
 const CELL_H  = (IMG_H - 2 * BOARD_Y) / ROWS;   // ≈ 127.7 px
-
-// Sprite grid — pieces.png (1024 × 1024) is 4 cols × 4 rows
-const SPR_W = 1024 / 4;   // = 256
-const SPR_H = 1024 / 4;   // = 256
 
 function cellCenter(c, r) {
   return {
@@ -597,8 +582,17 @@ function cellCenter(c, r) {
   };
 }
 
+const boardImg = new Image();
+
+// Load all 16 individual piece PNGs (pre-cut circles from assets/)
+const PIECE_IMGS = {};
+const ANIMALS     = ['elephant','tiger','cat','wolf','dog','rat','leopard','lion'];
+const PLAYERS_LIST = ['red','black'];
+let imagesLoaded = 0;
+const TOTAL_IMAGES = 1 + ANIMALS.length * PLAYERS_LIST.length; // 1 board + 16 pieces
+
 function onImageLoad() {
-  if (++imagesLoaded < 2) return;
+  if (++imagesLoaded < TOTAL_IMAGES) return;
   canvas.width  = IMG_W;
   canvas.height = IMG_H;
   initGame();
@@ -606,12 +600,18 @@ function onImageLoad() {
 }
 
 boardImg.onload  = onImageLoad;
-piecesImg.onload = onImageLoad;
-boardImg.onerror  = () => console.error('Failed to load chessboard.png');
-piecesImg.onerror = () => console.error('Failed to load pieces.png');
+boardImg.onerror = () => console.error('Failed to load chessboard.png');
+boardImg.src     = 'chessboard.png';
 
-boardImg.src  = 'chessboard.png';
-piecesImg.src = 'pieces.png';
+for (const player of PLAYERS_LIST) {
+  for (const animal of ANIMALS) {
+    const img = new Image();
+    img.onload  = onImageLoad;
+    img.onerror = () => console.error(`Failed to load piece: ${player}_${animal}`);
+    img.src     = `assets/piece_${player}_${animal}.png`;
+    PIECE_IMGS[`${player}_${animal}`] = img;
+  }
+}
 
 // ═══════════════════════════════════════════════
 //   RENDERING
@@ -675,19 +675,8 @@ function render() {
     ctx.stroke();
   }
 
-  // 5. Draw all pieces — clipped to a perfect circle
-  //
-  // Measured circle positions within each 256×256 sprite cell:
-  //   Red   pieces (rows 0–1): centre (135, 135), radius 120
-  //   Black pieces (rows 2–3): centre (135, 128), radius 120
-  //
-  // Strategy: scale the sprite so its circle radius = clipR, then
-  // draw it offset so the circle centre lands exactly on the board cell centre.
-  const SPR_CIRCLE_R  = 120;   // circle radius in source sprite (px)
-  const SPR_CX        = 135;   // circle centre-x in source sprite
-  const SPR_CY_RED    = 135;   // circle centre-y for red pieces
-  const SPR_CY_BLACK  = 128;   // circle centre-y for black pieces
-  const clipR         = CELL_W * 0.435; // desired radius on canvas
+  // 5. Draw all pieces — each is a pre-cut circle PNG, draw centred in cell
+  const clipR = Math.min(CELL_W, CELL_H) * 0.44;
 
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -695,25 +684,11 @@ function render() {
       if (!piece) continue;
 
       const { x, y } = cellCenter(c, r);
-      const [sc, sbr] = SPRITE_POS[piece.type];
-      const sr        = sbr + (piece.player === 'black' ? 2 : 0);
+      const img = PIECE_IMGS[`${piece.player}_${piece.type}`];
+      if (!img) continue;
 
-      const scale    = clipR / SPR_CIRCLE_R;
-      const drawSize = scale * SPR_W;                          // scaled sprite size
-      const sprCY    = (piece.player === 'red') ? SPR_CY_RED : SPR_CY_BLACK;
-      const drawX    = x - scale * SPR_CX;                    // so circle centre → (x, y)
-      const drawY    = y - scale * sprCY;
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x, y, clipR, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(
-        piecesImg,
-        sc * SPR_W, sr * SPR_H, SPR_W, SPR_H,
-        drawX, drawY, drawSize, drawSize
-      );
-      ctx.restore();
+      const drawSize = clipR * 2;
+      ctx.drawImage(img, x - clipR, y - clipR, drawSize, drawSize);
     }
   }
 }
