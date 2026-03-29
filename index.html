@@ -676,11 +676,18 @@ function render() {
   }
 
   // 5. Draw all pieces — clipped to a perfect circle
-  // pieces.png: circle fills ~95.3% of each 256×256 sprite cell (radius ≈122/128)
-  // drawSize is scaled so the sprite circle edge exactly meets clipR
-  const FILL_RATIO = 0.953;      // circle radius / half-sprite-side
-  const clipR    = CELL_W * 0.43; // desired piece radius on board
-  const drawSize = clipR * 2 / FILL_RATIO; // scale sprite so its circle = clipR
+  //
+  // Measured circle positions within each 256×256 sprite cell:
+  //   Red   pieces (rows 0–1): centre (135, 135), radius 120
+  //   Black pieces (rows 2–3): centre (135, 128), radius 120
+  //
+  // Strategy: scale the sprite so its circle radius = clipR, then
+  // draw it offset so the circle centre lands exactly on the board cell centre.
+  const SPR_CIRCLE_R  = 120;   // circle radius in source sprite (px)
+  const SPR_CX        = 135;   // circle centre-x in source sprite
+  const SPR_CY_RED    = 135;   // circle centre-y for red pieces
+  const SPR_CY_BLACK  = 128;   // circle centre-y for black pieces
+  const clipR         = CELL_W * 0.435; // desired radius on canvas
 
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -691,6 +698,12 @@ function render() {
       const [sc, sbr] = SPRITE_POS[piece.type];
       const sr        = sbr + (piece.player === 'black' ? 2 : 0);
 
+      const scale    = clipR / SPR_CIRCLE_R;
+      const drawSize = scale * SPR_W;                          // scaled sprite size
+      const sprCY    = (piece.player === 'red') ? SPR_CY_RED : SPR_CY_BLACK;
+      const drawX    = x - scale * SPR_CX;                    // so circle centre → (x, y)
+      const drawY    = y - scale * sprCY;
+
       ctx.save();
       ctx.beginPath();
       ctx.arc(x, y, clipR, 0, Math.PI * 2);
@@ -698,7 +711,7 @@ function render() {
       ctx.drawImage(
         piecesImg,
         sc * SPR_W, sr * SPR_H, SPR_W, SPR_H,
-        x - drawSize / 2, y - drawSize / 2, drawSize, drawSize
+        drawX, drawY, drawSize, drawSize
       );
       ctx.restore();
     }
